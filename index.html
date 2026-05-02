@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Partition Problem: Complexity & Algorithms</title>
+    <style>
+        :root {
+            --bg: #0a0a1a;
+            --card-bg: #0f0f23;
+            --nav-bg: rgba(10, 10, 26, 0.96);
+            --border: #4c1d95; /* Deep purple border */
+            --border-glow: #9333ea; /* Vibrant purple for glow */
+            --text-main: #ffffff;
+            --text-muted: #b4befe;
+            --accent: #a855f7;
+            --accent-glow: rgba(168, 85, 247, 0.4);
+            --heading: #d8b4fe;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ff4d4d;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Navbar */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: var(--nav-bg);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            padding: 1rem;
+            gap: 1.5rem;
+        }
+
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        nav a:hover { color: var(--accent); }
+
+        /* Layout */
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .concept-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-glow);
+            border-left: 4px solid var(--accent);
+            padding: 1.25rem;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), 0 0 5px var(--accent-glow);
+        }
+
+        .concept-card h4 {
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        details summary {
+            cursor: pointer;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--heading);
+            text-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 100px 20px 40px;
+        }
+
+        section {
+            padding: 60px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1, h2, h3 { color: var(--heading); margin-bottom: 1.5rem; text-shadow: 0 0 15px var(--accent-glow); }
+        h1 { font-size: 2.5rem; text-align: center; margin-bottom: 0.5rem; }
+        .subtitle { text-align: center; color: var(--text-muted); margin-bottom: 3rem; font-weight: 300; }
+
+        p { margin-bottom: 1rem; color: var(--text-muted); }
+        b, strong { color: var(--accent); }
+
+        /* Two Column Playground */
+        .playground {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 2rem 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 20px var(--accent-glow);
+        }
+
+        .controls {
+            padding: 2rem;
+            border-right: 1px solid var(--border);
+            background: rgba(0,0,0,0.1);
+        }
+
+        .visualization {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            padding: 4px 12px;
+            border-radius: 100px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+        }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); transition: background 0.3s ease; }
+
+        /* Inputs */
+        .input-group { margin-bottom: 1.5rem; }
+        label { display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; font-weight: bold; }
+        input, textarea {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: white;
+            font-family: inherit;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--accent);
+            border: none;
+            border-radius: 6px;
+            color: #ffffff;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            margin-bottom: 0.5rem;
+        }
+
+        button:hover { opacity: 0.9; }
+        button:active { transform: scale(0.98); }
+        button.secondary { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+
+        /* Viz Elements */
+        .bin-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .bin {
+            background: rgba(0,0,0,0.3);
+            border: 2px dashed var(--border-glow);
+            border-radius: 8px;
+            padding: 1rem;
+            min-height: 150px;
+        }
+
+        .bin.balanced { border-color: var(--success); box-shadow: inset 0 0 15px rgba(34, 197, 94, 0.2); }
+
+        .number-tag {
+            display: inline-block;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            margin: 0.3rem;
+            font-family: monospace;
+            cursor: move;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th { color: var(--accent); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; }
+
+        .code-block {
+            background: #000;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent);
+        }
+
+        /* Brute Force Interactive Styles */
+        .brute-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        .pseudo-container {
+            background: #000;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            border: 1px solid var(--border);
+        }
+        .pseudo-line {
+            padding: 2px 8px;
+            color: var(--text-muted);
+            border-radius: 4px;
+        }
+        .pseudo-line.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 0 15px var(--accent-glow);
+            font-weight: bold;
+        }
+        .brute-box {
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .brute-box.checking { background: var(--warning) !important; color: black; transform: scale(1.1); }
+        .brute-box.success { background: var(--success) !important; color: white; border-color: white; transform: scale(1.15); box-shadow: 0 0 20px var(--success); }
+        .explanation-box { min-height: 60px; padding: 12px; border: 1px solid var(--border-glow); border-radius: 6px; margin-top: 1rem; font-size: 0.9rem; background: rgba(0,0,0,0.4); color: white; border-left: 4px solid var(--accent); }
+
+        .viz-legend {
+            display: flex;
+            gap: 15px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* DP Interactive Styles */
+        .dp-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .dp-table-container {
+            max-width: 100%;
+            overflow-x: auto;
+            padding-bottom: 10px; /* For scrollbar */
+        }
+        .dp-table {
+            border-collapse: collapse;
+            font-size: 0.8em;
+            min-width: 100%; /* Ensures table respects its own width, not parent */
+        }
+        .dp-table th, .dp-table td {
+            border: 1px solid var(--border);
+            padding: 4px 8px;
+            text-align: center;
+            min-width: 30px; /* Ensure cells are wide enough */
+        }
+        .dp-cell.current { background-color: var(--accent); color: white; border: 1px solid white; box-shadow: 0 0 10px var(--accent-glow); }
+        .dp-cell.true-val { background-color: rgba(34, 197, 94, 0.3); color: var(--success); font-weight: bold; } /* success */
+        .dp-cell.false-val { background-color: rgba(239, 68, 68, 0.1); } /* danger */
+        .dp-cell.traced { background-color: var(--accent); color: white; font-weight: bold; box-shadow: 0 0 8px var(--accent-glow); }
+        .dp-item.traced { border-color: var(--success); box-shadow: 0 0 8px var(--success); transform: scale(1.05); }
+
+        /* Comparison Interactive Styles */
+        .compare-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .res-card {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-glow);
+        }
+        .res-card h4 { color: var(--accent); margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 5px; font-size: 0.9rem; }
+        .res-stat { font-size: 0.75rem; margin-bottom: 0.4rem; color: var(--text-muted); }
+        .res-stat span { color: var(--text-main); font-family: monospace; float: right; }
+        .chart-container label { font-size: 0.75rem; color: var(--accent); text-transform: uppercase; margin-bottom: 0.5rem; display: block; }
+
+        /* KK Interactive Styles */
+        .kk-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+        .kk-box {
+            padding: 10px 15px;
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            font-family: monospace;
+            transition: all 0.3s ease;
+        }
+        .kk-box.highlight {
+            border-color: var(--danger);
+            background: rgba(239, 68, 68, 0.2);
+            transform: translateY(-5px);
+        }
+        .kk-box.diff {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .worked-example {
+            background: var(--card-bg);
+            border: 1px solid var(--border-glow);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+        .complexity-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-glow);
+            border-left: 4px solid var(--accent);
+            padding: 1.25rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .complexity-box h4 {
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 900px) {
+            .playground { grid-template-columns: 1fr; margin: 1rem -10px; border-radius: 0; }
+            .controls { border-right: none; border-bottom: 1px solid var(--border); }
+            .nav-content { gap: 0.5rem; overflow-x: auto; justify-content: flex-start; }
+            nav a { white-space: nowrap; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-content">
+            <a href="#intro">Introduction</a>
+            <a href="#np">NP-Completeness</a>
+            <a href="#brute">Brute Force</a>
+            <a href="#dp">DP Solution</a>
+            <a href="#kk">Karmarkar-Karp</a>
+            <a href="#comparison">Comparison</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>The Partition Problem</h1>
+        <p class="subtitle">A fundamental challenge in computational complexity and number partitioning.</p>
+
+        <section id="intro">
+            <div class="concept-card">
+                <h4>Problem Definition</h4>
+                <p>The <strong>Partition Problem</strong> is a fundamental challenge in computer science: Given a multiset <i>S</i> of positive integers, can it be split into two subsets <i>S₁</i> and <i>S₂</i> such that the sum of elements in each subset is identical?</p>
+                <p><strong>Decision Question: Does there exist a subset S₁ such that Sum(S₁) = TotalSum / 2?</strong></p>
+            </div>
+
+            <div class="worked-example">
+                <h4>Example 1: Perfect Partition</h4>
+                <p>Set <i>S</i> = {3, 1, 1, 2, 2, 1} | Total Sum = 10 | Target = 5</p>
+                <div style="display: flex; gap: 2rem; margin-top: 1rem; flex-wrap: wrap;">
+                    <div>
+                        <label>Subset S₁ (Sum: 5)</label>
+                        <div class="bin balanced" style="min-height: auto; padding: 0.5rem; display: flex;">
+                            <span class="number-tag">3</span>
+                            <span class="number-tag">2</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label>Subset S₂ (Sum: 5)</label>
+                        <div class="bin balanced" style="min-height: auto; padding: 0.5rem; display: flex;">
+                            <span class="number-tag">1</span>
+                            <span class="number-tag">1</span>
+                            <span class="number-tag">2</span>
+                            <span class="number-tag">1</span>
+                        </div>
+                    </div>
+                </div>
+                <p style="color: var(--success); margin-top: 1rem; font-weight: bold;">Result: YES</p>
+            </div>
+
+            <div class="worked-example">
+                <h4>Example 2: Impossible Partition</h4>
+                <p>Set <i>S</i> = {1, 2, 3, 5} | Total Sum = 11 | Target = 5.5</p>
+                <div style="margin-top: 1rem;">
+                    <div class="bin" style="border-color: var(--danger); min-height: auto; padding: 0.5rem; display: flex; flex-wrap: wrap;">
+                        <span class="number-tag">1</span>
+                        <span class="number-tag">2</span>
+                        <span class="number-tag">3</span>
+                        <span class="number-tag">5</span>
+                    </div>
+                </div>
+                <p style="color: var(--danger); margin-top: 1rem; font-weight: bold;">Result: NO (Odd sum 11 cannot be split equally into integer subsets)</p>
+            </div>
+        </section>
+
+        <section id="np">
+            <h2>NP-Completeness</h2>
+            <h3>1. Verification (In NP)</h3>
+            <p>Partition is in <strong>NP</strong> because given a certificate (the subset <i>S₁</i>), we can verify it in polynomial time <i>O(n)</i>. We simply iterate through <i>S₁</i> to compute its sum and compare it to half of the total sum of <i>S</i>.</p>
+            
+            <div class="concept-grid">
+                <div class="concept-card">
+                    <h4>NP (Complexity)</h4>
+                    <p>Problems solvable by a non-deterministic machine in polynomial time.</p>
+                </div>
+                <div class="concept-card">
+                    <h4>Certificate</h4>
+                    <p>A candidate solution (like a subset) provided as proof to a verifier.</p>
+                </div>
+                <div class="concept-card">
+                    <h4>Verifier</h4>
+                    <p>A polynomial-time algorithm that checks if a certificate is correct.</p>
+                </div>
+            </div>
+
+            <h3>2. Reduction from Subset Sum</h3>
+            <p>We can prove Partition is NP-Hard by reducing the <strong>Subset Sum</strong> problem to it. Given a Subset Sum instance (<i>S</i>, <i>t</i>), we want to know if any subset of <i>S</i> sums to <i>t</i>.</p>
+            
+            <div class="concept-card" style="margin: 1.5rem 0;">
+                <h4>Reduction</h4>
+                <p>A method of proving problem B is at least as hard as A by showing that any algorithm for B can solve A.</p>
+            </div>
+
+            <p>To convert this to a Partition instance, we add one extra element <i>b</i> to the set <i>S</i>:</p>
+            <div class="code-block">
+                b = sum(S) - 2t
+            </div>
+            <p>If <i>b</i> > 0, the new set <i>S' = S ∪ {b}</i> has a total sum of 2 · (sum(<i>S</i>) - <i>t</i>). A valid partition of <i>S'</i> will result in two subsets each summing to sum(<i>S</i>) - <i>t</i>. One of these subsets must contain <i>b</i>; removing <i>b</i> from that subset leaves a subset of the original <i>S</i> that sums exactly to <i>t</i>.</p>
+            
+            <div class="worked-example">
+                <strong>Worked Example:</strong><br>
+                Subset Sum Instance: <i>S</i> = {3, 1, 1, 2, 2, 1}, Target <i>t</i> = 9.<br>
+                1. Sum(<i>S</i>) = 10.<br>
+                2. Calculate adjustment <i>b</i> = |Sum(<i>S</i>) - 2<i>t</i>| = |10 - 18| = 8.<br>
+                3. New set <i>S'</i> = {3, 1, 1, 2, 2, 1, 8}. New Total = 18. Target Partition = 9.<br>
+                4. A partition of <i>S'</i> is {8, 1} and {3, 1, 2, 2, 1}. Both sum to 9.<br>
+                5. The subset {3, 1, 2, 2, 1} sums to 9, which solves the original Subset Sum instance.
+            </div>
+        </section>
+
+        <section id="brute">
+            <h2>Brute Force Solution</h2>
+            <p>The brute force approach explores every possible subset. For a set of size <i>n</i>, there are 2ⁿ possible subsets. This interactive tool visualizes the exhaustive search.</p>
+            
+            <div class="playground">
+                <div class="controls">
+                    <div class="input-group">
+                        <label>Presets</label>
+                        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                            <button class="secondary" onclick="setBrutePreset([1,2,3,4])">1,2,3,4</button>
+                            <button class="secondary" onclick="setBrutePreset([3,1,1,2,2,1])">SubsetSum</button>
+                            <button class="secondary" onclick="setBrutePreset([4,5,6,7,8])">Larger</button>
+                        </div>
+                        <label>Custom Input</label>
+                        <input type="text" id="bruteInput" placeholder="e.g. 1, 2, 5">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Speed Control</label>
+                        <input type="range" id="bruteSpeed" min="0" max="950" value="500">
+                    </div>
+
+                    <button id="btnPlay" onclick="toggleBrutePlay()">Play</button>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                        <button class="secondary" onclick="stepBrute()">Step</button>
+                        <button class="secondary" onclick="resetBrute()">Reset</button>
+                    </div>
+
+                    <div style="margin-top: 1.5rem;">
+                        <label>Stats</label>
+                        <div style="font-size: 0.9rem;">
+                            Subsets Checked: <span id="bruteCounter" class="badge" style="background: var(--accent); color: var(--bg);">0</span><br>
+                            Complexity: <i>O(2ⁿ)</i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="visualization">
+                    <div id="bruteVisualContainer" style="min-height: 80px; display: flex; flex-wrap: wrap; gap: 10px;">
+                        <!-- Numbers rendered here -->
+                    </div>
+                    
+                    <div class="explanation-box" id="bruteExplanation">
+                        Ready to start. Total sum: <span id="bruteTotal">0</span>, Target: <span id="bruteTarget">0</span>
+                    </div>
+
+                    <div class="brute-grid">
+                        <div class="pseudo-container">
+                            <div class="pseudo-line" id="line-0">for i from 0 to 2^n - 1:</div>
+                            <div class="pseudo-line" id="line-1">&nbsp;&nbsp;subset = generate(i)</div>
+                            <div class="pseudo-line" id="line-2">&nbsp;&nbsp;if sum(subset) == Target:</div>
+                            <div class="pseudo-line" id="line-3">&nbsp;&nbsp;&nbsp;&nbsp;return SUCCESS</div>
+                            <div class="pseudo-line" id="line-4">return FAILURE</div>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">
+                            <p>Target Sum: <b id="dispTarget" style="color: var(--accent)">0</b></p>
+                            <p>Current Sum: <b id="dispCurrent" style="color: var(--warning)">0</b></p>
+                        </div>
+                    </div>
+
+                    <div class="viz-legend">
+                        <div><span style="display:inline-block; width:10px; height:10px; background:var(--warning)"></span> Checking</div>
+                        <div><span style="display:inline-block; width:10px; height:10px; background:var(--success)"></span> Solution Found</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="code-block">
+                // Complexity Analysis
+                // For n elements, there are 2^n combinations.
+                // If n=20, ops = 1,048,576 (Instant)
+                // If n=30, ops = 1,073,741,824 (Seconds)
+                // If n=50, ops = 1.12e+15 (Years)
+            </div>
+        </section>
+
+        <section id="dp">
+            <h2>Dynamic Programming</h2>
+            <p>If the numbers are small (or the target sum is small), we can use Dynamic Programming. This approach builds a table to determine if various sums are achievable using subsets of the given numbers. Here, <code>dp[i][s]</code> is true if a subset of the <b>first <code>i</code> elements</b> can sum to <code>s</code>.</p>
+            
+            <div class="concept-card" style="margin: 1.5rem 0;">
+                <h4>DP Recurrence</h4>
+                <p><code>dp[i][s] = dp[i-1][s] || dp[i-1][s - num[i-1]]</code></p>
+            </div>
+
+            <div class="playground">
+                <div class="controls">
+                    <div class="status-indicator" id="dpStatusBadge">
+                        <div class="status-dot" id="dpStatusDot"></div>
+                        <span id="dpStatusText">Idle</span>
+                    </div>
+                    <div class="input-group">
+                        <label>Presets</label>
+                        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                            <button class="secondary" onclick="setDpPreset([1,2,3])">1,2,3</button>
+                            <button class="secondary" onclick="setDpPreset([1,2,4,5])">1,2,4,5</button>
+                            <button class="secondary" onclick="setDpPreset([1,2,3,4,5,6,7,8,9,10])">Large Sum</button>
+                        </div>
+                        <label>Custom Input</label>
+                        <input type="text" id="dpInput" placeholder="e.g. 1, 2, 5">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Speed Control</label>
+                        <input type="range" id="dpSpeed" min="0" max="950" value="500">
+                    </div>
+
+                    <button id="btnDpPlay" onclick="toggleDpPlay()">Play</button>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                        <button class="secondary" onclick="stepDp()">Step</button>
+                        <button class="secondary" onclick="resetDp()">Reset</button>
+                    </div>
+
+                    <div style="margin-top: 1.5rem;">
+                        <label>Stats</label>
+                        <div style="font-size: 0.9rem;">
+                            Cells Computed: <span id="dpCounter" class="badge" style="background: var(--accent); color: var(--bg);">0</span><br>
+                            Solution Found: <span id="dpSolutionStatus" class="badge" style="background: var(--text-muted); color: var(--bg);">No</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="visualization">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                        <label style="margin-bottom: 0;">Numbers: <span id="dpNumbersContainer" style="display: inline-flex; gap: 5px;"></span></label>
+                        <div>
+                            Total Sum: <span id="dpTotalSumDisplay">0</span> | Target: <span id="dpTargetSumDisplay">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="explanation-box" id="dpExplanation">
+                        Ready to start DP.
+                    </div>
+
+                    <div class="dp-grid">
+                        <div class="pseudo-container" style="max-height: 200px; overflow-y: auto;">
+                            <div class="pseudo-line" id="dp-line-0">dp[0][0] = true; // Empty set can sum to 0</div>
+                            <div class="pseudo-line" id="dp-line-1">for i from 1 to N: // Iterate through each number</div>
+                            <div class="pseudo-line" id="dp-line-2">&nbsp;&nbsp;for s from 0 to Target: // Iterate through each possible sum</div>
+                            <div class="pseudo-line" id="dp-line-3">&nbsp;&nbsp;&nbsp;&nbsp;dp[i][s] = dp[i-1][s]; // Case 1: Exclude current number</div>
+                            <div class="pseudo-line" id="dp-line-4">&nbsp;&nbsp;&nbsp;&nbsp;if s >= num[i-1] and dp[i-1][s - num[i-1]]:</div>
+                            <div class="pseudo-line" id="dp-line-5">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dp[i][s] = true; // Case 2: Include current number</div>
+                            <div class="pseudo-line" id="dp-line-6">if dp[N][Target] is true: // Check if target sum is achievable</div>
+                            <div class="pseudo-line" id="dp-line-7">&nbsp;&nbsp;trace_solution();</div>
+                            <div class="pseudo-line" id="dp-line-8">return dp[N][Target];</div>
+                        </div>
+                        <div class="dp-table-container" id="dpTableContainer">
+                            <!-- DP Table will be rendered here -->
+                        </div>
+                    </div>
+
+                    <div class="viz-legend">
+                        <div><span style="display:inline-block; width:10px; height:10px; background:var(--accent-glow); border:1px solid var(--accent)"></span> Current Cell</div>
+                        <div><span style="display:inline-block; width:10px; height:10px; background:rgba(34,197,94,0.2)"></span> Possible (T)</div>
+                        <div><span style="display:inline-block; width:10px; height:10px; background:var(--accent)"></span> Traced Result</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="code-block">
+                // Complexity: O(N * Total_Sum) - Pseudo-polynomial
+                // N = number of elements, Total_Sum = sum of all elements
+            </div>
+            <p><strong>Complexity:</strong> <i>O(n · Sum)</i>. This is <em>pseudo-polynomial</em>. It is efficient only if the total sum is small.</p>
+        </section>
+
+        <section id="kk">
+            <h2>Karmarkar-Karp Heuristic (Largest Differencing)</h2>
+            <p>The Karmarkar-Karp heuristic is a powerful greedy approach for the Partition Problem. It works by repeatedly taking the two largest numbers and replacing them with their difference.</p>
+
+            <div class="playground">
+                <div class="controls">
+                    <div class="status-indicator" id="bruteStatusBadge">
+                        <div class="status-dot" id="bruteStatusDot"></div>
+                        <span id="bruteStatusText">Idle</span>
+                    </div>
+                    <div class="input-group">
+                        <label>Presets</label>
+                        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                            <button class="secondary" onclick="setKkPreset([8, 7, 6, 5, 4])">8,7,6,5,4</button>
+                            <button class="secondary" onclick="setKkPreset([10, 8, 4, 12, 5])">Mixed</button>
+                            <button class="secondary" onclick="setKkTightInstance()">Load Tight Instance</button>
+                        </div>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">
+                            <strong>Tight Instance:</strong> For this set, the optimal partition is [5, 5] and [4, 3, 3] (sum 10), but many greedy heuristics may fail to find it, demonstrating the heuristic nature of K-Karp.
+                        </p>
+                        <label>Custom Input</label>
+                        <input type="text" id="kkInput" placeholder="e.g. 8, 7, 6, 5, 4">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Speed Control</label>
+                        <input type="range" id="kkSpeed" min="0" max="950" value="500">
+                    </div>
+
+                    <button id="btnKkPlay" onclick="toggleKkPlay()">Play</button>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                        <button class="secondary" onclick="stepKk()">Step</button>
+                        <button class="secondary" onclick="resetKk()">Reset</button>
+                    </div>
+
+                    <div style="margin-top: 1.5rem;">
+                        <label>Stats</label>
+                        <div style="font-size: 0.9rem;">
+                            Operations: <span id="kkCounter" class="badge" style="background: var(--accent); color: var(--bg);">0</span><br>
+                            Final Imbalance: <span id="kkImbalance" class="badge" style="background: var(--warning); color: var(--bg);">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="visualization">
+                    <div id="kkVisualContainer" class="kk-list">
+                        <!-- Numbers rendered here -->
+                    </div>
+                    
+                    <div class="explanation-box" id="kkExplanation">
+                        Ready to start Karmarkar-Karp.
+                    </div>
+
+                    <div class="brute-grid">
+                        <div class="pseudo-container">
+                            <div class="pseudo-line" id="kk-line-0">while S.length > 1:</div>
+                            <div class="pseudo-line" id="kk-line-1">&nbsp;&nbsp;S.sortDescending()</div>
+                            <div class="pseudo-line" id="kk-line-2">&nbsp;&nbsp;a = S.popLargest()</div>
+                            <div class="pseudo-line" id="kk-line-3">&nbsp;&nbsp;b = S.popLargest()</div>
+                            <div class="pseudo-line" id="kk-line-4">&nbsp;&nbsp;S.add(|a - b|)</div>
+                            <div class="pseudo-line" id="kk-line-5">return S[0] // Discrepancy</div>
+                        </div>
+                    </div>
+
+                    <div class="viz-legend">
+                        <div><span style="display:inline-block; width:10px; height:10px; background:rgba(239, 68, 68, 0.2); border:1px solid var(--danger)"></span> Largest Pair</div>
+                        <div><span style="display:inline-block; width:10px; height:10px; background:var(--accent-glow); border:1px solid var(--accent)"></span> New Difference</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="comparison">
+            <h2>Comparison of Approaches</h2>
+            <p>Compare how different algorithms handle the same input in real-time. Notice how complexity scales as <i>n</i> grows.</p>
+            
+            <div class="playground">
+                <div class="controls">
+                    <div class="input-group">
+                        <label>Common Input Set</label>
+                        <input type="text" id="compareInput" value="4, 5, 6, 7, 8, 9, 10, 11, 12, 13">
+                    </div>
+                    <button onclick="runComparison()">Run All Approaches</button>
+                    
+                    <div style="margin-top: 2rem;">
+                        <label>Algorithmic Trade-offs</label>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.8rem;">
+                            <strong style="color:var(--danger)">Brute Force:</strong> Guarantees an exact solution by checking all 2ⁿ subsets. Becomes unusable quickly as <i>n</i> increases.
+                        </p>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.8rem;">
+                            <strong style="color:var(--warning)">DP:</strong> Guarantees an exact solution. Fast for small numbers, but "pseudo-polynomial" — it fails if the total sum is very large.
+                        </p>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">
+                            <strong style="color:var(--accent)">K-Karp:</strong> A heuristic that doesn't guarantee the best answer but runs in <i>O(n log n)</i>. Highly efficient for massive datasets.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="visualization" style="background: rgba(0,0,0,0.2);">
+                    <div class="compare-results">
+                        <div class="res-card">
+                            <h4>Brute Force</h4>
+                            <div class="res-stat">Result: <span id="res-bf-found">-</span></div>
+                            <div class="res-stat">Imbalance: <span id="res-bf-qual">-</span></div>
+                            <div class="res-stat">Operations: <span id="res-bf-ops">-</span></div>
+                            <div class="res-stat">Time: <span id="res-bf-time">-</span></div>
+                        </div>
+                        <div class="res-card">
+                            <h4>DP</h4>
+                            <div class="res-stat">Result: <span id="res-dp-found">-</span></div>
+                            <div class="res-stat">Imbalance: <span id="res-dp-qual">-</span></div>
+                            <div class="res-stat">Operations: <span id="res-dp-ops">-</span></div>
+                            <div class="res-stat">Time: <span id="res-dp-time">-</span></div>
+                        </div>
+                        <div class="res-card">
+                            <h4>K-Karp</h4>
+                            <div class="res-stat">Result: <span id="res-kk-found">Heuristic</span></div>
+                            <div class="res-stat">Imbalance: <span id="res-kk-qual">-</span></div>
+                            <div class="res-stat">Operations: <span id="res-kk-ops">-</span></div>
+                            <div class="res-stat">Time: <span id="res-kk-time">-</span></div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <label>Growth Complexity Curve ($n=5$ to $25$)</label>
+                        <svg id="complexityChart" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid meet" style="width: 100%; height: 200px; border: 1px solid var(--border); border-radius: 8px; background: #000;"></svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // --- Brute Force Interactive Logic ---
+        let bruteState = {
+            arr: [],
+            target: 0,
+            generator: null,
+            timer: null,
+            isPlaying: false,
+            counter: 0
+        };
+
+        function setBrutePreset(vals) {
+            document.getElementById('bruteInput').value = vals.join(', ');
+            resetBrute();
+        }
+
+        function resetBrute() {
+            stopBrute();
+            const input = document.getElementById('bruteInput').value || "1,2,3,4";
+            bruteState.arr = input.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+            let sum = bruteState.arr.reduce((a, b) => a + b, 0);
+            bruteState.target = sum / 2;
+            bruteState.counter = 0;
+            bruteState.generator = bruteStepper(bruteState.arr, bruteState.target);
+            
+            document.getElementById('bruteCounter').innerText = "0";
+            document.getElementById('bruteTotal').innerText = sum;
+            document.getElementById('bruteTarget').innerText = bruteState.target;
+            document.getElementById('dispTarget').innerText = bruteState.target;
+            document.getElementById('dispCurrent').innerText = "0";
+            document.getElementById('bruteExplanation').innerText = "";
+            
+            highlightLine(-1);
+            updateStatus('brute', 'Idle');
+        }
+
+        function renderBruteNumbers() {
+            const container = document.getElementById('bruteVisualContainer');
+            container.innerHTML = '';
+            bruteState.arr.forEach((num, i) => {
+                const el = document.createElement('div');
+                el.className = 'number-tag brute-box';
+                el.id = `bbox-${i}`;
+                el.innerText = num;
+                el.style.backgroundColor = `hsl(${(i * 45) % 360}, 60%, 30%)`;
+                container.appendChild(el);
+            });
+        }
+
+        function* bruteStepper(arr, target) {
+            const n = arr.length;
+            const totalSubsets = Math.pow(2, n);
+
+            for (let i = 0; i < totalSubsets; i++) {
+                yield { line: 0, msg: `Iteration ${i}: Checking next combination...`, indices: [] };
+                
+                let subsetIndices = [];
+                let currentSum = 0;
+                for (let j = 0; j < n; j++) {
+                    if ((i >> j) & 1) {
+                        subsetIndices.push(j);
+                        currentSum += arr[j];
+                    }
+                }
+                bruteState.counter++;
+                
+                yield { line: 1, msg: `Generated subset with sum ${currentSum}`, indices: subsetIndices, sum: currentSum };
+                yield { line: 2, msg: `Comparing ${currentSum} with target ${target}...`, indices: subsetIndices, sum: currentSum };
+
+                if (currentSum === target && (target * 2 % 2 === 0)) {
+                    yield { line: 3, msg: "MATCH FOUND!", indices: subsetIndices, sum: currentSum, found: true };
+                    return;
+                }
+            }
+            yield { line: 4, msg: "Search exhausted. No perfect partition found.", indices: [], found: false };
+        }
+
+        function highlightLine(idx) {
+            document.querySelectorAll('[id^="line-"]').forEach((l, i) => {
+                l.classList.toggle('active', i === idx);
+            });
+        }
+
+        function stepBrute() {
+            if (!bruteState.generator) resetBrute();
+            const { value, done } = bruteState.generator.next();
+            
+            if (done) {
+                stopBrute();
+                return;
+            }
+
+            highlightLine(value.line);
+            document.getElementById('bruteCounter').innerText = bruteState.counter;
+            document.getElementById('bruteExplanation').innerText = value.msg;
+            if (value.sum !== undefined) document.getElementById('dispCurrent').innerText = value.sum;
+
+            // Visual Highlighting
+            document.querySelectorAll('.brute-box').forEach(el => el.className = 'number-tag brute-box');
+            value.indices.forEach(idx => {
+                const el = document.getElementById(`bbox-${idx}`);
+                if (value.found) el.classList.add('success');
+                else el.classList.add('checking');
+            });
+
+            if (value.found) {
+                stopBrute();
+                updateStatus('brute', 'Done');
+            }
+        }
+        function toggleBrutePlay() {
+            if (bruteState.isPlaying) {
+                stopBrute();
+                updateStatus('brute', 'Paused');
+            } else {
+                bruteState.isPlaying = true;
+                updateStatus('brute', 'Running');
+                document.getElementById('btnPlay').innerText = "Pause";
+                autoStep();
+            }
+        }
+
+        function autoStep() {
+            if (!bruteState.isPlaying) return;
+            stepBrute();
+            const speed = 1000 - document.getElementById('bruteSpeed').value;
+            bruteState.timer = setTimeout(autoStep, speed);
+        }
+
+        function stopBrute() {
+            bruteState.isPlaying = false;
+            document.getElementById('btnPlay').innerText = "Play";
+            if (bruteState.timer) clearTimeout(bruteState.timer);
+        }
+
+        function updateStatus(section, state) {
+            const dot = document.getElementById(section + 'StatusDot');
+            const text = document.getElementById(section + 'StatusText');
+            const colors = { 
+                'Idle': '#b4befe', 'Running': '#22c55e', 
+                'Paused': '#f59e0b', 'Done': '#a855f7' 
+            };
+            if (dot && text) {
+                dot.style.background = colors[state] || colors.Idle;
+                text.innerText = state;
+            }
+        }
+
+        // --- DP Interactive Logic ---
+        let dpState = {
+            arr: [],
+            totalSum: 0,
+            target: 0,
+            dpTable: [],
+            generator: null,
+            timer: null,
+            isPlaying: false,
+            counter: 0,
+            solutionFound: false,
+            tracePath: []
+        };
+
+        function setDpPreset(vals) {
+            document.getElementById('dpInput').value = vals.join(', ');
+            resetDp();
+        }
+
+        function resetDp() {
+            stopDp();
+            updateStatus('dp', 'Idle');
+            const input = document.getElementById('dpInput').value || "1,2,3";
+            dpState.arr = input.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+            dpState.totalSum = dpState.arr.reduce((a, b) => a + b, 0);
+            dpState.target = Math.floor(dpState.totalSum / 2);
+            dpState.counter = 0;
+            dpState.solutionFound = false;
+            dpState.tracePath = [];
+            
+            // Initialize table with nulls for visualization
+            dpState.dpTable = Array.from({ length: dpState.arr.length + 1 }, () => 
+                Array(dpState.target + 1).fill(null)
+            );
+            
+            dpState.generator = dpStepper();
+
+            document.getElementById('dpCounter').innerText = "0";
+            document.getElementById('dpSolutionStatus').innerText = "No";
+            document.getElementById('dpSolutionStatus').style.background = "var(--text-muted)";
+            document.getElementById('dpTotalSumDisplay').innerText = dpState.totalSum;
+            document.getElementById('dpTargetSumDisplay').innerText = dpState.target;
+            document.getElementById('dpExplanation').innerText = "DP table initialized. Press Play or Step.";
+
+            renderDpNumbers();
+            renderDpTable();
+            highlightDpLine(-1);
+        }
+
+        function renderDpNumbers() {
+            const container = document.getElementById('dpNumbersContainer');
+            container.innerHTML = '';
+            dpState.arr.forEach((num, i) => {
+                const el = document.createElement('div');
+                el.className = 'number-tag';
+                const isTraced = dpState.tracePath.some(p => p.itemIdx === i);
+                if (isTraced) el.classList.add('traced', 'dp-item');
+                el.innerText = num;
+                container.appendChild(el);
+            });
+        }
+
+        function renderDpTable() {
+            const container = document.getElementById('dpTableContainer');
+            const n = dpState.arr.length;
+            const target = dpState.target;
+            
+            let html = `<table class="dp-table"><thead><tr><th>i \\ s</th>`;
+            for (let s = 0; s <= target; s++) html += `<th>${s}</th>`;
+            html += `</tr></thead><tbody>`;
+
+            for (let i = 0; i <= n; i++) {
+                html += `<tr><th>${i === 0 ? 'Ø' : dpState.arr[i-1]}</th>`;
+                for (let s = 0; s <= target; s++) {
+                    const val = dpState.dpTable[i][s];
+                    let cellClass = 'dp-cell';
+                    let text = '';
+                    if (val === true) { cellClass += ' true-val'; text = 'T'; }
+                    else if (val === false) { cellClass += ' false-val'; text = 'F'; }
+                    
+                    if (dpState.tracePath.some(p => p.row === i && p.col === s)) cellClass += ' traced';
+                    
+                    html += `<td class="${cellClass}" id="dp-cell-${i}-${s}">${text}</td>`;
+                }
+                html += `</tr>`;
+            }
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        function* dpStepper() {
+            const n = dpState.arr.length;
+            const target = dpState.target;
+
+            yield { line: 0, msg: "Base case: sum 0 is possible with an empty set.", r: 0, c: 0, val: true };
+            dpState.dpTable[0][0] = true;
+            for (let s = 1; s <= target; s++) dpState.dpTable[0][s] = false;
+
+            for (let i = 1; i <= n; i++) {
+                const num = dpState.arr[i - 1];
+                yield { line: 1, msg: `Iteration ${i}: Considering number ${num}`, r: i };
+                for (let s = 0; s <= target; s++) {
+                    dpState.counter++;
+                    yield { line: 2, msg: `Checking if sum ${s} is possible...`, r: i, c: s };
+                    
+                    let possible = dpState.dpTable[i-1][s];
+                    yield { line: 3, msg: `Excluding ${num}: Case dp[${i-1}][${s}] is ${possible}`, r: i, c: s, val: possible };
+                    
+                    if (!possible && s >= num) {
+                        yield { line: 4, msg: `Checking if we can include ${num} (target ${s-num})...`, r: i, c: s };
+                        if (dpState.dpTable[i-1][s-num]) {
+                            possible = true;
+                            yield { line: 5, msg: `Yes! dp[${i-1}][${s-num}] is true, so dp[${i}][${s}] is true.`, r: i, c: s, val: true };
+                        }
+                    }
+                    dpState.dpTable[i][s] = possible;
+                }
+            }
+
+            yield { line: 6, msg: "Table complete. Checking if target sum is achievable...", r: n, c: target };
+            if (dpState.dpTable[n][target]) {
+                dpState.solutionFound = true;
+                yield { line: 7, msg: "Success! Tracing back the solution items...", r: n, c: target };
+                traceSolution();
+                updateStatus('dp', 'Done');
+                yield { line: 8, msg: "Done. Solution highlighted in the set and table.", r: n, c: target };
+            } else {
+                updateStatus('dp', 'Done');
+                yield { line: 8, msg: "No perfect partition possible for this set.", r: n, c: target };
+            }
+        }
+
+        function traceSolution() {
+            let i = dpState.arr.length, s = dpState.target;
+            dpState.tracePath = [];
+            while (i > 0 && s > 0) {
+                const num = dpState.arr[i - 1];
+                if (s >= num && dpState.dpTable[i - 1][s - num]) {
+                    dpState.tracePath.push({ row: i, col: s, itemIdx: i - 1 });
+                    s -= num;
+                }
+                i--;
+            }
+            document.getElementById('dpSolutionStatus').innerText = "Yes";
+            document.getElementById('dpSolutionStatus').style.background = "var(--success)";
+            renderDpTable();
+            renderDpNumbers();
+        }
+
+        function highlightDpLine(idx) {
+            document.querySelectorAll('[id^="dp-line-"]').forEach((l, i) => l.classList.toggle('active', i === idx));
+        }
+
+        function stepDp() {
+            if (!dpState.generator) resetDp();
+            const { value, done } = dpState.generator.next();
+            if (done) { stopDp(); return; }
+            
+            highlightDpLine(value.line);
+            document.getElementById('dpCounter').innerText = dpState.counter;
+            document.getElementById('dpExplanation').innerText = value.msg;
+            
+            if (value.r !== undefined && value.c !== undefined) {
+                if (value.val !== undefined) renderDpTable();
+                const cell = document.getElementById(`dp-cell-${value.r}-${value.c}`);
+                if (cell) cell.classList.add('current');
+            }
+        }
+
+        function toggleDpPlay() {
+            if (dpState.isPlaying) stopDp();
+            else { dpState.isPlaying = true; document.getElementById('btnDpPlay').innerText = "Pause"; autoStepDp(); }
+        }
+        function stopDp() { dpState.isPlaying = false; document.getElementById('btnDpPlay').innerText = "Play"; if (dpState.timer) clearTimeout(dpState.timer); if (dpState.generator && !dpState.generator.done) updateStatus('dp', 'Paused'); }
+
+        function autoStepDp() {
+            if (!dpState.isPlaying) return;
+            stepDp();
+            dpState.timer = setTimeout(autoStepDp, 1000 - document.getElementById('dpSpeed').value);
+        }
+
+        // --- KK Interactive Logic ---
+        let kkState = {
+            arr: [],
+            generator: null,
+            timer: null,
+            isPlaying: false,
+            counter: 0
+        };
+
+        function setKkPreset(vals) {
+            document.getElementById('kkInput').value = vals.join(', ');
+            resetKk();
+        }
+
+        function setKkTightInstance() {
+            setKkPreset([5, 5, 4, 3, 3]);
+        }
+
+        function resetKk() {
+            stopKk();
+            updateStatus('kk', 'Idle');
+            const input = document.getElementById('kkInput').value || "8, 7, 6, 5, 4";
+            kkState.arr = input.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+            kkState.counter = 0;
+            kkState.generator = kkStepper();
+            
+            document.getElementById('kkCounter').innerText = "0";
+            document.getElementById('kkImbalance').innerText = "-";
+            document.getElementById('kkExplanation').innerText = "Simulation reset. Press Play or Step.";
+            
+            renderKkNumbers();
+            highlightKkLine(-1);
+        }
+
+        function renderKkNumbers(highlights = [], diffIdx = -1) {
+            const container = document.getElementById('kkVisualContainer');
+            container.innerHTML = '';
+            kkState.arr.forEach((num, i) => {
+                const el = document.createElement('div');
+                el.className = 'kk-box';
+                if (highlights.includes(i)) el.classList.add('highlight');
+                if (i === diffIdx) el.classList.add('diff');
+                el.innerText = num;
+                container.appendChild(el);
+            });
+        }
+
+        function* kkStepper() {
+            while (kkState.arr.length > 1) {
+                yield { line: 0, msg: "Checking if more than one number remains..." };
+                
+                kkState.arr.sort((a, b) => b - a);
+                renderKkNumbers();
+                yield { line: 1, msg: "Sorting numbers in descending order.", sort: true };
+                
+                const a = kkState.arr[0];
+                renderKkNumbers([0]);
+                yield { line: 2, msg: `Picking largest number: ${a}`, highlight: [0] };
+                
+                const b = kkState.arr[1];
+                renderKkNumbers([0, 1]);
+                yield { line: 3, msg: `Picking second largest number: ${b}`, highlight: [0, 1] };
+                
+                const diff = Math.abs(a - b);
+                kkState.arr.splice(0, 2);
+                kkState.arr.push(diff);
+                kkState.counter++;
+                
+                renderKkNumbers([], kkState.arr.length - 1);
+                yield { line: 4, msg: `Replacing ${a} and ${b} with their difference: ${diff}`, diffIdx: kkState.arr.length - 1 };
+            }
+            
+            const result = kkState.arr[0] || 0;
+            document.getElementById('kkImbalance').innerText = result;
+            updateStatus('kk', 'Done');
+            yield { line: 5, msg: `Final discrepancy found: ${result}`, finished: true };
+        }
+        function stopKk() { kkState.isPlaying = false; document.getElementById('btnKkPlay').innerText = "Play"; if (kkState.timer) clearTimeout(kkState.timer); if (kkState.generator && !kkState.generator.done) updateStatus('kk', 'Paused'); }
+
+        function highlightKkLine(idx) {
+            document.querySelectorAll('[id^="kk-line-"]').forEach((l, i) => l.classList.toggle('active', i === idx));
+        }
+
+        function stepKk() {
+            if (!kkState.generator) resetKk();
+            const { value, done } = kkState.generator.next();
+            if (done) { stopKk(); return; }
+
+            highlightKkLine(value.line);
+            document.getElementById('kkCounter').innerText = kkState.counter;
+            document.getElementById('kkExplanation').innerText = value.msg;
+            
+            if (!value.finished && !value.sort) {
+                renderKkNumbers(value.highlight || [], value.diffIdx !== undefined ? value.diffIdx : -1);
+            } else {
+                renderKkNumbers();
+            }
+            if (value.finished) stopKk();
+        }
+
+        function toggleKkPlay() {
+            if (kkState.isPlaying) stopKk();
+            else { kkState.isPlaying = true; document.getElementById('btnKkPlay').innerText = "Pause"; autoStepKk(); }
+        }
+
+        function autoStepKk() {
+            if (!kkState.isPlaying) return;
+            stepKk();
+            kkState.timer = setTimeout(autoStepKk, 1000 - document.getElementById('kkSpeed').value);
+        }
+
+        // --- Comparison Logic ---
+        function runComparison() {
+            const input = document.getElementById('compareInput').value;
+            const arr = input.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+            if (arr.length === 0) return;
+
+            const sum = arr.reduce((a, b) => a + b, 0);
+            const target = sum / 2;
+
+            // 1. Brute Force
+            let bfOps = 0, bfStart = performance.now(), bfResult = "No";
+            if (arr.length <= 25) {
+                const n = arr.length;
+                for (let i = 0; i < (1 << n); i++) {
+                    bfOps++;
+                    let s = 0;
+                    for (let j = 0; j < n; j++) if ((i >> j) & 1) s += arr[j];
+                    if (s === target && sum % 2 === 0) { bfResult = "Yes"; break; }
+                }
+            } else { bfResult = "Skip (N>25)"; }
+            let bfTime = performance.now() - bfStart;
+
+            // 2. DP
+            let dpOps = 0, dpStart = performance.now(), dpResult = "No";
+            if (sum % 2 === 0) {
+                const t = Math.floor(target);
+                const dp = new Array(t + 1).fill(false);
+                dp[0] = true;
+                for (let num of arr) {
+                    for (let i = t; i >= num; i--) {
+                        dpOps++;
+                        if (dp[i - num]) dp[i] = true;
+                    }
+                }
+                dpResult = dp[t] ? "Yes" : "No";
+            }
+            let dpTime = performance.now() - dpStart;
+
+            // 3. KK
+            let kkOps = 0, kkStart = performance.now();
+            let heap = [...arr].sort((a, b) => b - a);
+            while (heap.length > 1) {
+                kkOps++;
+                let a = heap.shift(), b = heap.shift();
+                heap.push(Math.abs(a - b));
+                heap.sort((a, b) => b - a);
+            }
+            let kkImbalance = heap[0] || 0;
+            let kkTime = performance.now() - kkStart;
+
+            // Update UI
+            const update = (id, found, qual, ops, time) => {
+                document.getElementById(`res-${id}-found`).innerText = found;
+                document.getElementById(`res-${id}-qual`).innerText = qual;
+                document.getElementById(`res-${id}-ops`).innerText = ops.toLocaleString();
+                document.getElementById(`res-${id}-time`).innerText = time.toFixed(3) + "ms";
+            };
+            update('bf', bfResult, (bfResult === "Yes" ? 0 : (sum % 2)), bfOps, bfTime);
+            update('dp', dpResult, (dpResult === "Yes" ? 0 : (sum % 2)), dpOps, dpTime);
+            update('kk', "Heuristic", kkImbalance, kkOps, kkTime);
+        }
+
+        function drawComplexityChart() {
+            const svg = document.getElementById('complexityChart');
+            const width = 800, height = 400, padding = 60;
+            const nMin = 5, nMax = 25;
+            const yMax = 1000000; // Cap Y at 1 million to show exponential explosion
+
+            const getX = (n) => padding + (n - nMin) * (width - 2 * padding) / (nMax - nMin);
+            const getY = (v) => height - padding - (Math.min(v, yMax) * (height - 2 * padding) / yMax);
+
+            let content = `
+                <!-- Grid Lines -->
+                <line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" stroke="#334155" />
+                <line x1="${padding}" y1="${height - padding}" x2="${padding}" y2="${padding}" stroke="#334155" />
+                <text x="${width / 2}" y="${height - 10}" fill="#94a3b8" text-anchor="middle" font-size="12">Input Size (n)</text>
+                <text x="15" y="${height / 2}" fill="#94a3b8" text-anchor="middle" font-size="12" transform="rotate(-90 15,${height / 2})">Operations</text>
+            `;
+
+            const points = { bf: [], dp: [], kk: [] };
+            for (let n = nMin; n <= nMax; n++) {
+                points.bf.push(`${getX(n)},${getY(Math.pow(2, n))}`);
+                points.dp.push(`${getX(n)},${getY(n * 50 * n)}`); // Model DP as n * avg_sum(50n)
+                points.kk.push(`${getX(n)},${getY(n * Math.log2(n))}`);
+            }
+
+            content += `
+                <polyline points="${points.bf.join(' ')}" fill="none" stroke="#ff4d4d" stroke-width="3" />
+                <polyline points="${points.dp.join(' ')}" fill="none" stroke="#f59e0b" stroke-width="3" />
+                <polyline points="${points.kk.join(' ')}" fill="none" stroke="#a855f7" stroke-width="3" />
+                
+                <!-- Labels -->
+                <text x="${getX(18)}" y="${getY(Math.pow(2, 18)) - 10}" fill="#ff4d4d" font-size="14">2^n (Brute)</text>
+                <text x="${getX(22)}" y="${getY(22 * 50 * 22) - 10}" fill="#f59e0b" font-size="14">n × Sum (DP)</text>
+                <text x="${getX(22)}" y="${getY(22 * Math.log2(22)) + 25}" fill="#a855f7" font-size="14">n log n (KK)</text>
+            `;
+
+            // X-axis ticks
+            for (let n = 5; n <= 25; n += 5) {
+                content += `<text x="${getX(n)}" y="${height - padding + 20}" fill="#94a3b8" text-anchor="middle" font-size="12">${n}</text>`;
+            }
+            
+            // Y-axis ticks
+            [0, 500000, 1000000].forEach(v => {
+                content += `<text x="${padding - 5}" y="${getY(v)}" fill="#94a3b8" text-anchor="end" font-size="10">${v === 1000000 ? '1M' : v.toLocaleString()}</text>`;
+            });
+
+            svg.innerHTML = content;
+        }
+
+        window.onload = () => {
+            resetBrute();
+            resetDp();
+            resetKk();
+            drawComplexityChart();
+        };
+    </script>
+</body>
+</html>
